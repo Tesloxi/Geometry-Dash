@@ -6,6 +6,7 @@
 import os
 import tkinter as tk
 
+from math import cos, tan
 from pygame import *
 
 init()
@@ -52,15 +53,32 @@ class Icon:
     def __init__(self, img_location, bottom):
         self.size = 100
         self.image = transform.scale(image.load(img_location), (self.size, self.size))
-        self.x = self.size * -1
-        self.y = bottom - self.size
-        self.position = (self.x, self.y)
+        self.rect = self.image.get_rect(bottomleft = (self.size * -1, bottom))
+        self.fixed_centerx = WIDTH * 2//10
+        self.mincentery = bottom - self.size // 2
+        self.yspeed = 10
+
+    def fall(self):
+        self.rect.centery += self.yspeed
+
+    def jump(self):
+        self.rect.centery -= self.yspeed
+        # self.image = transform.rotate(self.image, -9/2)
+        # self.rect = self.image.get_rect(center = (self.fixed_centerx, self.rect.centery))
 
     def move(self):
-        self.x += 10
-        self.position = (self.x, self.y)
+        self.rect.x += 10
+
+class Spike:
+    pass
 
 icon = Icon("Images/icon.png", HEIGHT - ground_img_rect.h)
+
+# Game settings
+
+falling = False
+jumping = False
+max_height = 0
 
 # Setup game loop
 
@@ -72,17 +90,34 @@ while run:
     clock.tick(FPS)
 
     for e in event.get():
-            if e.type == QUIT: 
-                run = False
+        if e.type == QUIT: 
+            run = False
+        elif e.type == KEYDOWN:
+            if e.key == K_SPACE: 
+                jumping = True
+                max_height = icon.rect.centery - 2 * icon.size
 
-    if icon.x < WIDTH * 2//10:
+    if icon.rect.x < icon.fixed_centerx:
         icon.move()
 
+    if falling:
+        icon.fall()
+
+    if icon.rect.centery >= icon.mincentery:
+        falling = False
+
+    if jumping:
+        icon.jump()
+
+    if icon.rect.centery <= max_height:
+        jumping = False
+        falling = True
+    
     move_ground(ground_rect)
 
     win.blit(bg, bg_rect)
     win.blit(ground, ground_rect)
-    win.blit(icon.image, icon.position)
+    win.blit(icon.image, icon.rect)
     display.update()
 
 quit()
